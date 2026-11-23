@@ -149,10 +149,6 @@ and compare. Use `-e VUS=100` for more load. Docker alternative: `Get-Content lo
 ![Stats page](docs/screenshots/stats.png)
 *Per-link analytics: total clicks, 7-day chart and top referrers*
 
-## Benchmark results
-
-_Coming soon (k6, cache on vs off)._
-
 ## Known limits (deliberate shortcuts)
 
 - No auth, so there is **no public deactivate/delete endpoint** (`LinkService.deactivate` exists, tested, and evicts the cache).
