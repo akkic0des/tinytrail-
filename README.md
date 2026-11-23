@@ -5,12 +5,17 @@ A production-style URL shortener: Spring Boot 3 (Java 21) + MySQL + Redis backen
 **Features:** short links from a Base62-encoded DB ID or a custom alias · expiry · 302 redirects with Redis cache-aside ·
 per-IP rate limiting · async click tracking (hashed IPs) · stats + 7-day analytics · QR codes.
 
-```
-Browser ──▶ React (Vite / nginx)
-   │
-   └────▶ Spring Boot ──▶ Redis  (redirect cache, rate-limit counters)
-              │  └─ @Async pool ─▶ MySQL (links, click_events)
-              └──────────────────▶ MySQL
+**Live demo:** https://tinytrail-web.onrender.com · **API:** https://tinytrail.onrender.com (example short link: https://tinytrail.onrender.com/1)
+
+> Runs on Render's free tier: the first request after ~15 min idle can take 30-60 s while the backend wakes up (the UI shows a "waking up" message).
+
+```mermaid
+flowchart LR
+    B[Browser] --> FE["Render Static Site<br/>React + Vite"]
+    B --> API["Render Web Service<br/>Spring Boot, Docker"]
+    API -->|"redirect cache + rate limits"| KV[("Render Key Value<br/>Valkey / Redis")]
+    API -->|"links, stats, analytics"| DB[("TiDB Cloud<br/>MySQL-compatible")]
+    API -.->|"@Async pool: click events + count"| DB
 ```
 
 ## Run it locally (Windows / PowerShell, low memory)
@@ -108,9 +113,41 @@ k6 run load-test\redirect-test.js                                         # term
 Prints `http_req_duration` including **p(95)**; the run fails if p95 ≥ 200 ms. Repeat with `$env:CACHE_ENABLED = "false"`
 and compare. Use `-e VUS=100` for more load. Docker alternative: `Get-Content load-test\redirect-test.js | docker run --rm -i grafana/k6 run -e BASE_URL=http://host.docker.internal:8080 -`.
 
-## Live demo note
+## Deployment
 
-On free hosting the backend sleeps when idle, so the first request can take up to a minute; the UI shows a "waking up" message.
+| Piece | Where | Notes |
+|---|---|---|
+| Frontend | Render **Static Site** | `npm run build` (Vite); `VITE_API_URL` is baked in at build time; rewrite `/*` → `/index.html` for client-side routes |
+| Backend | Render **Web Service** (Docker) | Singapore region, Java 21, `JAVA_TOOL_OPTIONS=-Xmx300m` to fit the 512 MB free tier |
+| Database | **TiDB Cloud Starter** | MySQL-compatible; TLS via `sslMode=VERIFY_IDENTITY` in the JDBC URL |
+| Cache / rate limits | Render **Key Value** (Valkey, Redis-compatible) | Private network only, no public endpoint |
+
+**Backend environment variables** (set in the Render dashboard; never commit values):
+
+| Variable | Description |
+|---|---|
+| `DB_URL` | JDBC URL of the TiDB database, including `sslMode=VERIFY_IDENTITY` |
+| `DB_USER` / `DB_PASSWORD` | TiDB credentials |
+| `DB_POOL_SIZE` | Max DB connections; keep small on the free tiers |
+| `REDIS_HOST` / `REDIS_PORT` | Internal address of the Key Value instance |
+| `JAVA_TOOL_OPTIONS` | JVM flags, e.g. the heap cap for the 512 MB instance |
+| `FORWARD_HEADERS_STRATEGY` | Set to `native` so the app trusts Render's proxy headers |
+| `IP_HASH_SALT` | Secret salt for hashing client IPs before storing clicks |
+| `BASE_URL` | Public backend URL, used to build returned short URLs |
+| `CORS_ORIGIN` | Frontend origin allowed to call the API |
+
+**Deployment gotchas**
+- Maven Central returned **429** to Render's shared build IPs; the build now uses the Google Maven Central mirror (`backend/.mvn/settings.xml`).
+- `CORS_ORIGIN` must match the frontend origin exactly (scheme + host, no trailing slash).
+- `FORWARD_HEADERS_STRATEGY=native` is required, otherwise rate limiting sees Render's proxy IP instead of the real client IP.
+
+## Screenshots
+
+_Coming soon._
+
+## Benchmark results
+
+_Coming soon (k6, cache on vs off)._
 
 ## Known limits (deliberate shortcuts)
 
