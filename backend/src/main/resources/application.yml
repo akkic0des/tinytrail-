@@ -1,0 +1,40 @@
+# Every value can be overridden with an environment variable; defaults are for local dev only.
+spring:
+  application:
+    name: tinytrail
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/tinytrail?useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${DB_USER:tinytrail}
+    password: ${DB_PASSWORD:tinytrail}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:10}
+  jpa:
+    open-in-view: false
+    hibernate:
+      # shortcut: auto-DDL keeps the demo simple, switch to Flyway migrations before a real production launch.
+      ddl-auto: ${DDL_AUTO:update}
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+server:
+  port: ${PORT:8080}
+  # Set to "native" only when running behind a trusted reverse proxy, otherwise clients can spoof their IP.
+  forward-headers-strategy: ${FORWARD_HEADERS_STRATEGY:none}
+
+management:
+  endpoints.web.exposure.include: health,info
+
+app:
+  base-url: ${BASE_URL:http://localhost:8080}       # used to build the shortUrl returned to clients
+  cors-origin: ${CORS_ORIGIN:http://localhost:5173} # comma-separated list allowed
+  ip-hash-salt: ${IP_HASH_SALT:dev-only-salt}       # change in production, see README
+  cache:
+    enabled: ${CACHE_ENABLED:true}                  # set false to benchmark without Redis
+    ttl: ${CACHE_TTL:24h}
+  rate-limit:
+    max-requests: ${RATE_LIMIT_MAX:10}
+    window: ${RATE_LIMIT_WINDOW:60s}

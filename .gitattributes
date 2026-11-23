@@ -1,0 +1,4 @@
+# Keep the Maven wrapper runnable on both Windows (cmd) and Linux (Docker/CI).
+* text=auto
+mvnw text eol=lf
+*.cmd text eol=crlf

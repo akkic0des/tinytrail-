@@ -1,0 +1,65 @@
+# Dev:  docker compose up -d mysql redis   (run backend + frontend natively, saves RAM)
+# Demo: docker compose up --build          (everything in containers)
+services:
+  mysql:
+    image: mysql:8.0
+    mem_limit: 512m
+    # Small buffer pool / no performance_schema keep MySQL near 300-400 MB.
+    command: --innodb-buffer-pool-size=128M --performance-schema=OFF --max-connections=50
+    environment:
+      MYSQL_DATABASE: tinytrail
+      MYSQL_USER: ${DB_USER:-tinytrail}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-tinytrail}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+    ports: ["127.0.0.1:3306:3306"]
+    volumes: [mysql-data:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root}"]
+      interval: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    mem_limit: 128m
+    # volatile-lru: only keys with a TTL (all of ours) may be evicted when memory is full.
+    command: redis-server --maxmemory 100mb --maxmemory-policy volatile-lru
+    ports: ["127.0.0.1:6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    mem_limit: 768m   # 512m heap (-Xmx512m in the image) + metaspace/threads
+    depends_on:
+      mysql: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/tinytrail?allowPublicKeyRetrieval=true&useSSL=false
+      DB_USER: ${DB_USER:-tinytrail}
+      DB_PASSWORD: ${DB_PASSWORD:-tinytrail}
+      REDIS_HOST: redis
+      BASE_URL: ${BASE_URL:-http://localhost:8080}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      IP_HASH_SALT: ${IP_HASH_SALT:-change-me}
+      CACHE_ENABLED: ${CACHE_ENABLED:-true}
+      RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-10}
+    ports: ["8080:8080"]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      retries: 10
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+    mem_limit: 64m
+    depends_on: [backend]
+    ports: ["3000:80"]
+
+volumes:
+  mysql-data:
