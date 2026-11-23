@@ -143,7 +143,11 @@ and compare. Use `-e VUS=100` for more load. Docker alternative: `Get-Content lo
 
 ## Screenshots
 
-_Coming soon._
+![Home page](docs/screenshots/home.png)
+*Shorten a link with optional custom alias and expiry; recent links saved locally*
+
+![Stats page](docs/screenshots/stats.png)
+*Per-link analytics: total clicks, 7-day chart and top referrers*
 
 ## Benchmark results
 
