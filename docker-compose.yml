@@ -31,7 +31,7 @@ services:
 
   backend:
     build: ./backend
-    mem_limit: 768m   # 512m heap (-Xmx512m in the image) + metaspace/threads
+    mem_limit: 768m   # 512m heap + metaspace/threads
     depends_on:
       mysql: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -43,6 +43,7 @@ services:
       BASE_URL: ${BASE_URL:-http://localhost:8080}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
       IP_HASH_SALT: ${IP_HASH_SALT:-change-me}
+      JAVA_TOOL_OPTIONS: -Xmx512m
       CACHE_ENABLED: ${CACHE_ENABLED:-true}
       RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-10}
     ports: ["8080:8080"]

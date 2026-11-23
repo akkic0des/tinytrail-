@@ -6,3 +6,4 @@ dist/
 .idea/
 .vscode/
 .mvn/wrapper/maven-wrapper.jar
+dump.rdb
