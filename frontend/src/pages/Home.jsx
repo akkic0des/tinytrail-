@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
-import { api } from '../api.js'
+import { api, useSlow, WAKING_MSG } from '../api.js'
 
 const STORAGE_KEY = 'tinytrail.recent'
 const EXPIRY_OPTIONS = [
@@ -45,6 +45,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [recent, setRecent] = useState(loadRecent)
+  const slow = useSlow(loading)
 
   const submit = async (e) => {
     e.preventDefault()
@@ -97,6 +98,7 @@ export default function Home() {
             </select>
           </div>
         </div>
+        {slow && <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">{WAKING_MSG}</p>}
         {error && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
         <button disabled={loading} className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 font-semibold text-white hover:bg-indigo-700 disabled:opacity-60">
           {loading ? 'Shortening…' : 'Shorten'}

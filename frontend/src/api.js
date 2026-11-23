@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 // Set VITE_API_URL at build time (see .env.example); falls back to the local backend.
 export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
 
@@ -20,3 +22,16 @@ export async function api(path, options) {
   // 400 (invalid URL/alias) and 409 (alias taken) carry a ready-to-show message from the backend.
   throw new Error(body.message ?? 'Something went wrong. Please try again.')
 }
+
+/** True once `loading` has lasted 4s: on free hosting that usually means the backend is waking up. */
+export function useSlow(loading) {
+  const [slow, setSlow] = useState(false)
+  useEffect(() => {
+    if (!loading) return setSlow(false)
+    const t = setTimeout(() => setSlow(true), 4000)
+    return () => clearTimeout(t)
+  }, [loading])
+  return slow
+}
+
+export const WAKING_MSG = 'Waking up the server (free hosting sleeps when idle). This can take up to a minute…'

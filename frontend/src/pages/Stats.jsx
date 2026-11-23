@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { api } from '../api.js'
+import { api, useSlow, WAKING_MSG } from '../api.js'
 
 const fmtDate = (iso) => new Date(iso).toLocaleDateString(undefined, { dateStyle: 'medium' })
 const fmtDay = (d) => new Date(d + 'T00:00:00Z').toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' })
@@ -21,6 +21,8 @@ export default function Stats() {
   const [analytics, setAnalytics] = useState(null)
   const [error, setError] = useState('')
 
+  const slow = useSlow(!stats && !error)
+
   useEffect(() => {
     setError('')
     Promise.all([api(`/api/links/${code}/stats`), api(`/api/links/${code}/analytics`)])
@@ -29,7 +31,7 @@ export default function Stats() {
   }, [code])
 
   if (error) return <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-red-700">{error}</p>
-  if (!stats || !analytics) return <p className="text-slate-500">Loading…</p>
+  if (!stats || !analytics) return <p className="text-slate-500">{slow ? WAKING_MSG : 'Loading…'}</p>
 
   const data = analytics.clicksPerDay.map((d) => ({ day: fmtDay(d.date), clicks: d.clicks }))
 

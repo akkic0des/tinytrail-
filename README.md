@@ -108,6 +108,10 @@ k6 run load-test\redirect-test.js                                         # term
 Prints `http_req_duration` including **p(95)**; the run fails if p95 ≥ 200 ms. Repeat with `$env:CACHE_ENABLED = "false"`
 and compare. Use `-e VUS=100` for more load. Docker alternative: `Get-Content load-test\redirect-test.js | docker run --rm -i grafana/k6 run -e BASE_URL=http://host.docker.internal:8080 -`.
 
+## Live demo note
+
+On free hosting the backend sleeps when idle, so the first request can take up to a minute; the UI shows a "waking up" message.
+
 ## Known limits (deliberate shortcuts)
 
 - No auth, so there is **no public deactivate/delete endpoint** (`LinkService.deactivate` exists, tested, and evicts the cache).
