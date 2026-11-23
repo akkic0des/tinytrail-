@@ -1,0 +1,11 @@
+<settings>
+  <mirrors>
+    <!-- Render's shared build IPs get 429 from repo.maven.apache.org; Google serves the same artifacts. -->
+    <mirror>
+      <id>google-maven-central</id>
+      <name>Google Maven Central mirror</name>
+      <url>https://maven-central.storage-download.googleapis.com/maven2/</url>
+      <mirrorOf>central</mirrorOf>
+    </mirror>
+  </mirrors>
+</settings>

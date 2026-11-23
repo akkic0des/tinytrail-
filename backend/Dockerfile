@@ -2,7 +2,8 @@
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 # Retries + timeouts: Maven Central occasionally drops connections from cloud build hosts.
-ARG MVN_FLAGS="-B -Dmaven.wagon.http.retryHandler.count=3 -Daether.connector.http.retryHandler.count=3 -Daether.connector.connectTimeout=30000 -Daether.connector.requestTimeout=120000"
+ARG MVN_FLAGS="-B -s /tmp/settings.xml -Dmaven.wagon.http.retryHandler.count=3 -Daether.connector.http.retryHandler.count=3 -Daether.connector.connectTimeout=30000 -Daether.connector.requestTimeout=120000"
+COPY .mvn/settings.xml /tmp/settings.xml
 COPY pom.xml .
 COPY src ./src
 # No -q so failures are readable; one whole-build retry covers transient download errors.
